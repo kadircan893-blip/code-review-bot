@@ -194,7 +194,7 @@ async function main() {
         "This PR implements GitHub OAuth authentication using NextAuth.js v5 with good overall structure. The implementation follows modern patterns but has a few security concerns around token storage and some performance opportunities.",
       startedAt: new Date(Date.now() - 5 * 60 * 1000),
       completedAt: new Date(Date.now() - 4 * 60 * 1000),
-      githubCommentId: 1234567890,
+      githubCommentId: "1234567890",
     },
   });
 
@@ -258,7 +258,7 @@ async function main() {
         "Excellent fix! The race condition is properly resolved using a database transaction with appropriate isolation level. The code is clean, well-tested, and follows existing patterns.",
       startedAt: new Date(Date.now() - 25 * 60 * 60 * 1000),
       completedAt: new Date(Date.now() - 25 * 60 * 60 * 1000 + 3 * 60 * 1000),
-      githubCommentId: 1234567891,
+      githubCommentId: "1234567891",
     },
   });
 
