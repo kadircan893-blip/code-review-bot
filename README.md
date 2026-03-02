@@ -25,7 +25,7 @@
 
 ```mermaid
 graph LR
-    A[GitHub PR opened] -->|Webhook| B[/api/webhook/github]
+    A[GitHub PR opened] -->|Webhook| B[API webhook handler]
     B --> C[Verify HMAC signature]
     C --> D[Create Review record]
     D --> E[triggerReview async]
