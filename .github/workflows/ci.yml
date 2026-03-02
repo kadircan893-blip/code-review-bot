@@ -41,7 +41,7 @@ jobs:
       NEXTAUTH_URL: http://localhost:3000
       GITHUB_CLIENT_ID: test
       GITHUB_CLIENT_SECRET: test
-      ANTHROPIC_API_KEY: test
+      GROQ_API_KEY: test
       WEBHOOK_SECRET: test
     steps:
       - uses: actions/checkout@v4
