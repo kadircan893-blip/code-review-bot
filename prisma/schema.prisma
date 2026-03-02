@@ -1,0 +1,187 @@
+// This is your Prisma schema file
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// ─── NextAuth Models ─────────────────────────────────────────────────────────
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+// ─── User ────────────────────────────────────────────────────────────────────
+
+model User {
+  id          String   @id @default(cuid())
+  githubId    String?  @unique
+  login       String?
+  name        String?
+  email       String?  @unique
+  emailVerified DateTime?
+  image       String?
+  avatarUrl   String?
+  accessToken String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  accounts     Account[]
+  sessions     Session[]
+  repositories Repository[]
+  settings     UserSettings?
+}
+
+// ─── Repository ──────────────────────────────────────────────────────────────
+
+model Repository {
+  id             String   @id @default(cuid())
+  userId         String
+  githubRepoId   Int      @unique
+  fullName       String
+  name           String
+  owner          String
+  description    String?
+  isPrivate      Boolean  @default(false)
+  defaultBranch  String   @default("main")
+  webhookId      Int?
+  webhookSecret  String   @unique @default("")
+  isActive       Boolean  @default(true)
+  connectedAt    DateTime @default(now())
+  lastActivityAt DateTime @default(now())
+
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  pullRequests PullRequest[]
+
+  @@index([userId])
+}
+
+// ─── PullRequest ─────────────────────────────────────────────────────────────
+
+model PullRequest {
+  id           String    @id @default(cuid())
+  repositoryId String
+  githubPrId   Int
+  title        String
+  body         String?
+  authorLogin  String
+  authorAvatar String?
+  baseBranch   String
+  headBranch   String
+  isDraft      Boolean   @default(false)
+  state        String    @default("open")
+  htmlUrl      String
+  additions    Int       @default(0)
+  deletions    Int       @default(0)
+  changedFiles Int       @default(0)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  mergedAt     DateTime?
+
+  repository Repository @relation(fields: [repositoryId], references: [id], onDelete: Cascade)
+  reviews    Review[]
+
+  @@unique([repositoryId, githubPrId])
+  @@index([repositoryId])
+}
+
+// ─── Review ──────────────────────────────────────────────────────────────────
+// status: PENDING | RUNNING | COMPLETED | FAILED | SKIPPED
+
+model Review {
+  id              String    @id @default(cuid())
+  pullRequestId   String
+  status          String    @default("PENDING")
+  model           String    @default("llama-3.3-70b-versatile")
+  promptTokens    Int?
+  completionTokens Int?
+  score           Float?
+  grade           String?
+  summary         String?
+  rawResponse     String?
+  githubCommentId String?
+  errorMessage    String?
+  startedAt       DateTime?
+  completedAt     DateTime?
+  createdAt       DateTime     @default(now())
+
+  pullRequest PullRequest     @relation(fields: [pullRequestId], references: [id], onDelete: Cascade)
+  comments    ReviewComment[]
+
+  @@index([pullRequestId])
+}
+
+// ─── ReviewComment ───────────────────────────────────────────────────────────
+// category: BUG | SECURITY | PERFORMANCE | STYLE | MAINTAINABILITY | DOCUMENTATION | TEST_COVERAGE | GENERAL
+// severity: INFO | LOW | MEDIUM | HIGH | CRITICAL
+
+model ReviewComment {
+  id         String   @id @default(cuid())
+  reviewId   String
+  path       String
+  line       Int?
+  side       String?
+  category   String   @default("GENERAL")
+  severity   String   @default("LOW")
+  title      String
+  body       String
+  suggestion String?
+  createdAt  DateTime        @default(now())
+
+  review Review @relation(fields: [reviewId], references: [id], onDelete: Cascade)
+
+  @@index([reviewId])
+}
+
+// ─── UserSettings ─────────────────────────────────────────────────────────────
+
+model UserSettings {
+  id                 String   @id @default(cuid())
+  userId             String   @unique
+  reviewOnDraft      Boolean  @default(false)
+  autoPostComments   Boolean  @default(true)
+  minChangedFiles    Int      @default(1)
+  maxDiffLines       Int      @default(2000)
+  focusAreas         String   @default("bugs,security,performance,style")
+  severityThreshold  String   @default("LOW")
+  customInstructions String?
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}

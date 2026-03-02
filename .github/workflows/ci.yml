@@ -1,0 +1,55 @@
+name: CI
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+jobs:
+  typecheck:
+    name: Type Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - run: npx prisma generate
+      - run: npm run typecheck
+
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - run: npm run lint
+
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    env:
+      DATABASE_URL: file:./test.db
+      NEXTAUTH_SECRET: test-secret-for-ci-only
+      NEXTAUTH_URL: http://localhost:3000
+      GITHUB_CLIENT_ID: test
+      GITHUB_CLIENT_SECRET: test
+      ANTHROPIC_API_KEY: test
+      WEBHOOK_SECRET: test
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - run: npx prisma generate
+      - run: npx prisma db push
+      - run: npm run build
